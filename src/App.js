@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import TOC from "./components/TOC";
 import ReadContent from "./components/ReadContent";
 import CreateContent from "./components/CreateContent";
+import UpdateContent from "./components/UpdateContent";
 import Subject from "./components/Subject";
 import Control from "./components/Control";
 import "./App.css";
@@ -11,8 +12,8 @@ class App extends Component {
         super(props);
         this.max_content_id = 3;
         this.state = {
-            mode: "create",
-            selected_content_id: 2,
+            mode: "welcome",
+            selected_content_id: 1,
             subject: { title: "WEB", sub: "World Wide Web!" },
             welcome: { title: "Welcome", desc: "Hello, React!" },
             contents: [
@@ -22,7 +23,20 @@ class App extends Component {
             ],
         };
     }
-    render() {
+
+    getReadContent() {
+        let i = 0;
+        while (i < this.state.contents.length) {
+            let data = this.state.contents[i];
+            if (data.id === this.state.selected_content_id) {
+                return data;
+                break;
+            }
+            i = i + 1;
+        }
+    }
+
+    getContent() {
         let _title,
             _desc,
             _article = null;
@@ -31,17 +45,8 @@ class App extends Component {
             _desc = this.state.welcome.desc;
             _article = <ReadContent title={_title} desc={_desc}></ReadContent>;
         } else if (this.state.mode === "read") {
-            let i = 0;
-            while (i < this.state.contents.length) {
-                let data = this.state.contents[i];
-                if (data.id === this.state.selected_content_id) {
-                    _title = data.title;
-                    _desc = data.desc;
-                    _article = <ReadContent title={_title} desc={_desc}></ReadContent>;
-                    break;
-                }
-                i = i + 1;
-            }
+            let _content = this.getReadContent();
+            _article = <ReadContent title={_content.title} desc={_content.desc}></ReadContent>;
         } else if (this.state.mode === "create") {
             _article = (
                 <CreateContent
@@ -53,11 +58,39 @@ class App extends Component {
                             title: _title,
                             desc: _desc,
                         });
-                        this.setState({ contents: _contents });
+                        this.setState({
+                            contents: _contents,
+                            mode: "read",
+                            selected_content_id: this.max_content_id,
+                        });
                     }}
                 ></CreateContent>
             );
+        } else if (this.state.mode === "update") {
+            let _content = this.getReadContent();
+            _article = (
+                <UpdateContent
+                    data={_content}
+                    onSubmit={(_id, _title, _desc) => {
+                        let _contents = Array.from(this.state.contents);
+                        let i = 0;
+                        while (i < _contents.length) {
+                            if (_contents[i].id === _id) {
+                                _contents[i] = { id: _id, title: _title, desc: _desc };
+                                break;
+                            }
+                            i = i + 1;
+                        }
+                        this.setState({ contents: _contents, mode: "read" });
+                    }}
+                ></UpdateContent>
+            );
         }
+
+        return _article;
+    }
+
+    render() {
         return (
             <div className="app">
                 <Subject
@@ -83,7 +116,7 @@ class App extends Component {
                         });
                     }}
                 ></Control>
-                {_article}
+                {this.getContent()}
             </div>
         );
     }
